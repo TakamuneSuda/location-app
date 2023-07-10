@@ -94,11 +94,11 @@ const map = new maplibregl.Map({
         attribution:
           '<a helf="https://disaportal.gsi.go.jp/hazardmapportal/hazardmap/copyright/opendata.html">ハザードマップポータルサイト</a>'
       },
-      // emergency_evacuation_site
-      emergency_evacuation_site: {
+      // shelter
+      shelter: {
         type: 'vector',
         tiles: [
-          `${location.href.replace('index.html', '')}/emergency_evacuation_site/{z}/{x}/{y}.pbf`,
+          `${location.href.replace('index.html', '')}/shelter/{z}/{x}/{y}.pbf`,
         ],
         minzoom: 5,
         maxzoom: 8,
@@ -156,11 +156,11 @@ const map = new maplibregl.Map({
         paint: {'raster-opacity': 0.7},
         layout: {visibility: 'none'},
       },
-      // emergency_evacuation_site_layer
+      // shelter_layer
       {
-        id: 'emergency_evacuation_site_flood_layer',
-        source: 'emergency_evacuation_site',
-        'source-layer': 'emergency_evacuation_site',
+        id: 'shelter_flood_layer',
+        source: 'shelter',
+        'source-layer': 'shelter',
         type: 'circle',
         paint: {
           'circle-color': '#6666cc',
@@ -180,9 +180,9 @@ const map = new maplibregl.Map({
         layout: {visibility: 'none'},
       },
       {
-        id: 'emergency_evacuation_site_landslide_layer',
-        source: 'emergency_evacuation_site',
-        'source-layer': 'emergency_evacuation_site',
+        id: 'shelter_landslide_layer',
+        source: 'shelter',
+        'source-layer': 'shelter',
         type: 'circle',
         paint: {
           'circle-color': '#6666cc',
@@ -202,9 +202,9 @@ const map = new maplibregl.Map({
         layout: {visibility: 'none'},
       },
       {
-        id: 'emergency_evacuation_site_storm_layer',
-        source: 'emergency_evacuation_site',
-        'source-layer': 'emergency_evacuation_site',
+        id: 'shelter_storm_layer',
+        source: 'shelter',
+        'source-layer': 'shelter',
         type: 'circle',
         paint: {
           'circle-color': '#6666cc',
@@ -224,9 +224,9 @@ const map = new maplibregl.Map({
         layout: {visibility: 'none'},
       },
       {
-        id: 'emergency_evacuation_site_earthquake_layer',
-        source: 'emergency_evacuation_site',
-        'source-layer': 'emergency_evacuation_site',
+        id: 'shelter_earthquake_layer',
+        source: 'shelter',
+        'source-layer': 'shelter',
         type: 'circle',
         paint: {
           'circle-color': '#6666cc',
@@ -246,9 +246,9 @@ const map = new maplibregl.Map({
         layout: {visibility: 'none'},
       },
       {
-        id: 'emergency_evacuation_site_tsunami_layer',
-        source: 'emergency_evacuation_site',
-        'source-layer': 'emergency_evacuation_site',
+        id: 'shelter_tsunami_layer',
+        source: 'shelter',
+        'source-layer': 'shelter',
         type: 'circle',
         paint: {
           'circle-color': '#6666cc',
@@ -268,9 +268,9 @@ const map = new maplibregl.Map({
         layout: {visibility: 'none'},
       },
       {
-        id: 'emergency_evacuation_site_fire_layer',
-        source: 'emergency_evacuation_site',
-        'source-layer': 'emergency_evacuation_site',
+        id: 'shelter_fire_layer',
+        source: 'shelter',
+        'source-layer': 'shelter',
         type: 'circle',
         paint: {
           'circle-color': '#6666cc',
@@ -290,9 +290,9 @@ const map = new maplibregl.Map({
         layout: {visibility: 'none'},
       },
       {
-        id: 'emergency_evacuation_site_inland_flood_layer',
-        source: 'emergency_evacuation_site',
-        'source-layer': 'emergency_evacuation_site',
+        id: 'shelter_inland_flood_layer',
+        source: 'shelter',
+        'source-layer': 'shelter',
         type: 'circle',
         paint: {
           'circle-color': '#6666cc',
@@ -312,9 +312,9 @@ const map = new maplibregl.Map({
         layout: {visibility: 'none'},
       },
       {
-        id: 'emergency_evacuation_site_volcano_layer',
-        source: 'emergency_evacuation_site',
-        'source-layer': 'emergency_evacuation_site',
+        id: 'shelter_volcano_layer',
+        source: 'shelter',
+        'source-layer': 'shelter',
         type: 'circle',
         paint: {
           'circle-color': '#6666cc',
@@ -349,18 +349,18 @@ map.on('load', () => {
       'hazard_landslide_layer': '地滑り警戒区域',
     },
   });
-  // emergency_evacuation_site
+  // shelter
   map.addControl(opacityLayer, 'top-left');
   const opacityEvacuationSite = new OpacityControl({
     baseLayers: {
-      'emergency_evacuation_site_flood_layer': '洪水',
-      'emergency_evacuation_site_landslide_layer': '崖崩れ、土石流及び地滑り',
-      'emergency_evacuation_site_storm_layer': '高潮',
-      'emergency_evacuation_site_earthquake_layer': '地震',
-      'emergency_evacuation_site_tsunami_layer': '津波',
-      'emergency_evacuation_site_fire_layer': '大規模な火事',
-      'emergency_evacuation_site_inland_flood_layer': '内水氾濫',
-      'emergency_evacuation_site_volcano_layer': '火山現象',
+      'shelter_flood_layer': '洪水',
+      'shelter_landslide_layer': '崖崩れ、土石流及び地滑り',
+      'shelter_storm_layer': '高潮',
+      'shelter_earthquake_layer': '地震',
+      'shelter_tsunami_layer': '津波',
+      'shelter_fire_layer': '大規模な火事',
+      'shelter_inland_flood_layer': '内水氾濫',
+      'shelter_volcano_layer': '火山現象',
     },
   });
   map.addControl(opacityEvacuationSite, 'top-right');
@@ -368,14 +368,14 @@ map.on('load', () => {
   map.on('mousemove', (e) => {
     const features = map.queryRenderedFeatures(e.point, {
       layers: [
-        'emergency_evacuation_site_flood_layer',
-        'emergency_evacuation_site_landslide_layer',
-        'emergency_evacuation_site_storm_layer',
-        'emergency_evacuation_site_earthquake_layer',
-        'emergency_evacuation_site_tsunami_layer',
-        'emergency_evacuation_site_fire_layer',
-        'emergency_evacuation_site_inland_flood_layer',
-        'emergency_evacuation_site_volcano_layer',
+        'shelter_flood_layer',
+        'shelter_landslide_layer',
+        'shelter_storm_layer',
+        'shelter_earthquake_layer',
+        'shelter_tsunami_layer',
+        'shelter_fire_layer',
+        'shelter_inland_flood_layer',
+        'shelter_volcano_layer',
       ]
     });
 
@@ -389,14 +389,14 @@ map.on('load', () => {
   map.on('click', (e) => {
     const features = map.queryRenderedFeatures(e.point, {
       layers: [
-        'emergency_evacuation_site_flood_layer',
-        'emergency_evacuation_site_landslide_layer',
-        'emergency_evacuation_site_storm_layer',
-        'emergency_evacuation_site_earthquake_layer',
-        'emergency_evacuation_site_tsunami_layer',
-        'emergency_evacuation_site_fire_layer',
-        'emergency_evacuation_site_inland_flood_layer',
-        'emergency_evacuation_site_volcano_layer',
+        'shelter_flood_layer',
+        'shelter_landslide_layer',
+        'shelter_storm_layer',
+        'shelter_earthquake_layer',
+        'shelter_tsunami_layer',
+        'shelter_fire_layer',
+        'shelter_inland_flood_layer',
+        'shelter_volcano_layer',
       ]
     });
 
@@ -447,8 +447,12 @@ map.on('load', () => {
       .addTo(map);
   });
 
+  // current location
   const geolocationControl = new maplibregl.GeolocateControl({
     trackUserLocation: true,
   });
   map.addControl(geolocationControl, 'bottom-right');
+  geolocationControl.on('geolocate', (e) => {
+    userLocation = [e.coords.longitude, e.coords.latitude];
+  });
 });
