@@ -12,6 +12,7 @@
     "vite": "^4.4.0"
   },
   "dependencies": {
+    "@turf/distance": "^6.5.0",
     "maplibre-gl-opacity": "^1.4.0"
   }
 }

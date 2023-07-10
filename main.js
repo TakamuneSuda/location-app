@@ -2,6 +2,7 @@ import maplibregl from 'maplibre-gl';
 import 'maplibre-gl/dist/maplibre-gl.css';
 import OpacityControl from 'maplibre-gl-opacity';
 import 'maplibre-gl-opacity/dist/maplibre-gl-opacity.css';
+import distance from '@turf/distance';
 
 const map = new maplibregl.Map({
   container: 'map',
@@ -94,17 +95,25 @@ const map = new maplibregl.Map({
         attribution:
           '<a helf="https://disaportal.gsi.go.jp/hazardmapportal/hazardmap/copyright/opendata.html">ハザードマップポータルサイト</a>'
       },
-      // emergency_evacuation_site
-      emergency_evacuation_site: {
+      // shelter
+      shelter: {
         type: 'vector',
         tiles: [
-          `${location.href.replace('index.html', '')}/emergency_evacuation_site/{z}/{x}/{y}.pbf`,
+          `${location.href.replace('index.html', '')}/shelter/{z}/{x}/{y}.pbf`,
         ],
         minzoom: 5,
         maxzoom: 8,
         attribution: 
           `<a helf="https://www.gsi.go.jp/bousaichiri/hinanbasho.html" target="_blank">国土地理院:指定緊急避難場所データ</a>`,
       },
+      // route
+      route: {
+        type: 'geojson',
+        data: {
+          type: 'FeatureCollection',
+          features: [],
+        }
+      }
     },
     layers: [
       // background map
@@ -156,11 +165,11 @@ const map = new maplibregl.Map({
         paint: {'raster-opacity': 0.7},
         layout: {visibility: 'none'},
       },
-      // emergency_evacuation_site_layer
+      // shelter_layer
       {
-        id: 'emergency_evacuation_site_flood_layer',
-        source: 'emergency_evacuation_site',
-        'source-layer': 'emergency_evacuation_site',
+        id: 'shelter_flood_layer',
+        source: 'shelter',
+        'source-layer': 'shelter',
         type: 'circle',
         paint: {
           'circle-color': '#6666cc',
@@ -180,9 +189,9 @@ const map = new maplibregl.Map({
         layout: {visibility: 'none'},
       },
       {
-        id: 'emergency_evacuation_site_landslide_layer',
-        source: 'emergency_evacuation_site',
-        'source-layer': 'emergency_evacuation_site',
+        id: 'shelter_landslide_layer',
+        source: 'shelter',
+        'source-layer': 'shelter',
         type: 'circle',
         paint: {
           'circle-color': '#6666cc',
@@ -202,9 +211,9 @@ const map = new maplibregl.Map({
         layout: {visibility: 'none'},
       },
       {
-        id: 'emergency_evacuation_site_storm_layer',
-        source: 'emergency_evacuation_site',
-        'source-layer': 'emergency_evacuation_site',
+        id: 'shelter_storm_layer',
+        source: 'shelter',
+        'source-layer': 'shelter',
         type: 'circle',
         paint: {
           'circle-color': '#6666cc',
@@ -224,9 +233,9 @@ const map = new maplibregl.Map({
         layout: {visibility: 'none'},
       },
       {
-        id: 'emergency_evacuation_site_earthquake_layer',
-        source: 'emergency_evacuation_site',
-        'source-layer': 'emergency_evacuation_site',
+        id: 'shelter_earthquake_layer',
+        source: 'shelter',
+        'source-layer': 'shelter',
         type: 'circle',
         paint: {
           'circle-color': '#6666cc',
@@ -246,9 +255,9 @@ const map = new maplibregl.Map({
         layout: {visibility: 'none'},
       },
       {
-        id: 'emergency_evacuation_site_tsunami_layer',
-        source: 'emergency_evacuation_site',
-        'source-layer': 'emergency_evacuation_site',
+        id: 'shelter_tsunami_layer',
+        source: 'shelter',
+        'source-layer': 'shelter',
         type: 'circle',
         paint: {
           'circle-color': '#6666cc',
@@ -268,9 +277,9 @@ const map = new maplibregl.Map({
         layout: {visibility: 'none'},
       },
       {
-        id: 'emergency_evacuation_site_fire_layer',
-        source: 'emergency_evacuation_site',
-        'source-layer': 'emergency_evacuation_site',
+        id: 'shelter_fire_layer',
+        source: 'shelter',
+        'source-layer': 'shelter',
         type: 'circle',
         paint: {
           'circle-color': '#6666cc',
@@ -290,9 +299,9 @@ const map = new maplibregl.Map({
         layout: {visibility: 'none'},
       },
       {
-        id: 'emergency_evacuation_site_inland_flood_layer',
-        source: 'emergency_evacuation_site',
-        'source-layer': 'emergency_evacuation_site',
+        id: 'shelter_inland_flood_layer',
+        source: 'shelter',
+        'source-layer': 'shelter',
         type: 'circle',
         paint: {
           'circle-color': '#6666cc',
@@ -312,9 +321,9 @@ const map = new maplibregl.Map({
         layout: {visibility: 'none'},
       },
       {
-        id: 'emergency_evacuation_site_volcano_layer',
-        source: 'emergency_evacuation_site',
-        'source-layer': 'emergency_evacuation_site',
+        id: 'shelter_volcano_layer',
+        source: 'shelter',
+        'source-layer': 'shelter',
         type: 'circle',
         paint: {
           'circle-color': '#6666cc',
@@ -333,6 +342,16 @@ const map = new maplibregl.Map({
         filter: ['get', 'volcano'],
         layout: {visibility: 'none'},
       },
+      // line between current location and nearest shelter
+      {
+        id: 'route-layer',
+        source: 'route',
+        type: 'line',
+        paint: {
+          'line-color': '#33aaff',
+          'line-width': 4,
+        },
+      },
     ]
   }
 });
@@ -349,18 +368,18 @@ map.on('load', () => {
       'hazard_landslide_layer': '地滑り警戒区域',
     },
   });
-  // emergency_evacuation_site
+  // shelter
   map.addControl(opacityLayer, 'top-left');
   const opacityEvacuationSite = new OpacityControl({
     baseLayers: {
-      'emergency_evacuation_site_flood_layer': '洪水',
-      'emergency_evacuation_site_landslide_layer': '崖崩れ、土石流及び地滑り',
-      'emergency_evacuation_site_storm_layer': '高潮',
-      'emergency_evacuation_site_earthquake_layer': '地震',
-      'emergency_evacuation_site_tsunami_layer': '津波',
-      'emergency_evacuation_site_fire_layer': '大規模な火事',
-      'emergency_evacuation_site_inland_flood_layer': '内水氾濫',
-      'emergency_evacuation_site_volcano_layer': '火山現象',
+      'shelter_flood_layer': '洪水',
+      'shelter_landslide_layer': '崖崩れ、土石流及び地滑り',
+      'shelter_storm_layer': '高潮',
+      'shelter_earthquake_layer': '地震',
+      'shelter_tsunami_layer': '津波',
+      'shelter_fire_layer': '大規模な火事',
+      'shelter_inland_flood_layer': '内水氾濫',
+      'shelter_volcano_layer': '火山現象',
     },
   });
   map.addControl(opacityEvacuationSite, 'top-right');
@@ -368,14 +387,14 @@ map.on('load', () => {
   map.on('mousemove', (e) => {
     const features = map.queryRenderedFeatures(e.point, {
       layers: [
-        'emergency_evacuation_site_flood_layer',
-        'emergency_evacuation_site_landslide_layer',
-        'emergency_evacuation_site_storm_layer',
-        'emergency_evacuation_site_earthquake_layer',
-        'emergency_evacuation_site_tsunami_layer',
-        'emergency_evacuation_site_fire_layer',
-        'emergency_evacuation_site_inland_flood_layer',
-        'emergency_evacuation_site_volcano_layer',
+        'shelter_flood_layer',
+        'shelter_landslide_layer',
+        'shelter_storm_layer',
+        'shelter_earthquake_layer',
+        'shelter_tsunami_layer',
+        'shelter_fire_layer',
+        'shelter_inland_flood_layer',
+        'shelter_volcano_layer',
       ]
     });
 
@@ -389,14 +408,14 @@ map.on('load', () => {
   map.on('click', (e) => {
     const features = map.queryRenderedFeatures(e.point, {
       layers: [
-        'emergency_evacuation_site_flood_layer',
-        'emergency_evacuation_site_landslide_layer',
-        'emergency_evacuation_site_storm_layer',
-        'emergency_evacuation_site_earthquake_layer',
-        'emergency_evacuation_site_tsunami_layer',
-        'emergency_evacuation_site_fire_layer',
-        'emergency_evacuation_site_inland_flood_layer',
-        'emergency_evacuation_site_volcano_layer',
+        'shelter_flood_layer',
+        'shelter_landslide_layer',
+        'shelter_storm_layer',
+        'shelter_earthquake_layer',
+        'shelter_tsunami_layer',
+        'shelter_fire_layer',
+        'shelter_inland_flood_layer',
+        'shelter_volcano_layer',
       ]
     });
 
@@ -447,8 +466,76 @@ map.on('load', () => {
       .addTo(map);
   });
 
+  // current location
+  let userLocation = null;
   const geolocationControl = new maplibregl.GeolocateControl({
     trackUserLocation: true,
   });
   map.addControl(geolocationControl, 'bottom-right');
+  geolocationControl.on('geolocate', (e) => {
+    userLocation = [e.coords.longitude, e.coords.latitude];
+  });
+
+  // current layer
+  const getCurrentShelterLayerFilter = () => {
+    const style = map.getStyle();
+    const shelterLayers = style.layers.filter((layer) =>
+      layer.id.startsWith('shelter'),
+    );
+    const visibleShelterLayers = shelterLayers.filter(
+      (layer) => layer.layout.visibility === 'visible',
+    );
+    return visibleShelterLayers[0].filter;
+  }
+
+  // nearest shelter
+  const getNearestShelter = (longitude, latitude) => {
+    const currentShelterLayerFilter = getCurrentShelterLayerFilter();
+    const shelters = map.querySourceFeatures('shelter', {
+      sourceLayer: 'shelter',
+      filter: currentShelterLayerFilter,
+    })
+
+    const nearestShelter = shelters.reduce((minDistShelter, shelter) => {
+      const dist = distance(
+        [longitude, latitude],
+        shelter.geometry.coordinates,
+      );
+      if (minDistShelter === null || minDistShelter.properties.dist > dist)
+        return {
+          ...shelter,
+          properties: {
+            ...shelter.properties,
+            dist,
+          },
+        };
+      return  minDistShelter;
+    }, null);
+
+    return nearestShelter;
+  };
+
+  map.on('render', () => {
+    // if geolocationControl is OFF delete current location
+    if (geolocationControl._watchState === 'OFF') userLocation = null;
+
+    if (map.getZoom() < 7 || userLocation === null) return;
+
+    const nearestShelter = getNearestShelter(userLocation[0], userLocation[1]);
+
+    const routeShelter = {
+      type: 'Feature',
+      geometry: {
+        type: 'LineString',
+        coordinates: [
+          userLocation, nearestShelter._geometry.coordinates
+        ],
+      },
+    };
+
+    map.getSource('route').setData({
+      type: 'FeatureCollection',
+      features: [routeShelter],
+    });
+  });
 });
