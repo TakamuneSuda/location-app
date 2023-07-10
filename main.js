@@ -2,6 +2,7 @@ import maplibregl from 'maplibre-gl';
 import 'maplibre-gl/dist/maplibre-gl.css';
 import OpacityControl from 'maplibre-gl-opacity';
 import 'maplibre-gl-opacity/dist/maplibre-gl-opacity.css';
+import distance from '@turf/distance';
 
 const map = new maplibregl.Map({
   container: 'map',
@@ -105,6 +106,14 @@ const map = new maplibregl.Map({
         attribution: 
           `<a helf="https://www.gsi.go.jp/bousaichiri/hinanbasho.html" target="_blank">国土地理院:指定緊急避難場所データ</a>`,
       },
+      // route
+      route: {
+        type: 'geojson',
+        data: {
+          type: 'FeatureCollection',
+          features: [],
+        }
+      }
     },
     layers: [
       // background map
@@ -333,6 +342,16 @@ const map = new maplibregl.Map({
         filter: ['get', 'volcano'],
         layout: {visibility: 'none'},
       },
+      // line between current location and nearest shelter
+      {
+        id: 'route-layer',
+        source: 'route',
+        type: 'line',
+        paint: {
+          'line-color': '#33aaff',
+          'line-width': 4,
+        },
+      },
     ]
   }
 });
@@ -448,11 +467,75 @@ map.on('load', () => {
   });
 
   // current location
+  let userLocation = null;
   const geolocationControl = new maplibregl.GeolocateControl({
     trackUserLocation: true,
   });
   map.addControl(geolocationControl, 'bottom-right');
   geolocationControl.on('geolocate', (e) => {
     userLocation = [e.coords.longitude, e.coords.latitude];
+  });
+
+  // current layer
+  const getCurrentShelterLayerFilter = () => {
+    const style = map.getStyle();
+    const shelterLayers = style.layers.filter((layer) =>
+      layer.id.startsWith('shelter'),
+    );
+    const visibleShelterLayers = shelterLayers.filter(
+      (layer) => layer.layout.visibility === 'visible',
+    );
+    return visibleShelterLayers[0].filter;
+  }
+
+  // nearest shelter
+  const getNearestShelter = (longitude, latitude) => {
+    const currentShelterLayerFilter = getCurrentShelterLayerFilter();
+    const shelters = map.querySourceFeatures('shelter', {
+      sourceLayer: 'shelter',
+      filter: currentShelterLayerFilter,
+    })
+
+    const nearestShelter = shelters.reduce((minDistShelter, shelter) => {
+      const dist = distance(
+        [longitude, latitude],
+        shelter.geometry.coordinates,
+      );
+      if (minDistShelter === null || minDistShelter.properties.dist > dist)
+        return {
+          ...shelter,
+          properties: {
+            ...shelter.properties,
+            dist,
+          },
+        };
+      return  minDistShelter;
+    }, null);
+
+    return nearestShelter;
+  };
+
+  map.on('render', () => {
+    // if geolocationControl is OFF delete current location
+    if (geolocationControl._watchState === 'OFF') userLocation = null;
+
+    if (map.getZoom() < 7 || userLocation === null) return;
+
+    const nearestShelter = getNearestShelter(userLocation[0], userLocation[1]);
+
+    const routeShelter = {
+      type: 'Feature',
+      geometry: {
+        type: 'LineString',
+        coordinates: [
+          userLocation, nearestShelter._geometry.coordinates
+        ],
+      },
+    };
+
+    map.getSource('route').setData({
+      type: 'FeatureCollection',
+      features: [routeShelter],
+    });
   });
 });
