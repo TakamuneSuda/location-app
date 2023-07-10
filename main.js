@@ -338,6 +338,7 @@ const map = new maplibregl.Map({
 });
 
 map.on('load', () => {
+  // layer
   const opacityLayer = new OpacityControl({
     baseLayers: {
       'hazard_flood_layer': '洪水浸水想定区域',
@@ -348,6 +349,7 @@ map.on('load', () => {
       'hazard_landslide_layer': '地滑り警戒区域',
     },
   });
+  // emergency_evacuation_site
   map.addControl(opacityLayer, 'top-left');
   const opacityEvacuationSite = new OpacityControl({
     baseLayers: {
@@ -362,4 +364,86 @@ map.on('load', () => {
     },
   });
   map.addControl(opacityEvacuationSite, 'top-right');
+
+  map.on('mousemove', (e) => {
+    const features = map.queryRenderedFeatures(e.point, {
+      layers: [
+        'emergency_evacuation_site_flood_layer',
+        'emergency_evacuation_site_landslide_layer',
+        'emergency_evacuation_site_storm_layer',
+        'emergency_evacuation_site_earthquake_layer',
+        'emergency_evacuation_site_tsunami_layer',
+        'emergency_evacuation_site_fire_layer',
+        'emergency_evacuation_site_inland_flood_layer',
+        'emergency_evacuation_site_volcano_layer',
+      ]
+    });
+
+    if(features.length > 0) {
+      map.getCanvas().style.cursor = 'pointer';
+    } else {
+      map.getCanvas().style.cursor = '';
+    }
+  })
+
+  map.on('click', (e) => {
+    const features = map.queryRenderedFeatures(e.point, {
+      layers: [
+        'emergency_evacuation_site_flood_layer',
+        'emergency_evacuation_site_landslide_layer',
+        'emergency_evacuation_site_storm_layer',
+        'emergency_evacuation_site_earthquake_layer',
+        'emergency_evacuation_site_tsunami_layer',
+        'emergency_evacuation_site_fire_layer',
+        'emergency_evacuation_site_inland_flood_layer',
+        'emergency_evacuation_site_volcano_layer',
+      ]
+    });
+
+    if (features.length === 0) return;
+
+    const feature = features[0];
+    const popup = new maplibregl.Popup()
+      .setLngLat(feature.geometry.coordinates)
+      .setHTML(
+        `\
+        <div style="font-weight:900; font-size: 1rem;">
+          ${feature.properties.name}
+        </div>\
+        <div>
+          ${feature.properties.address}
+        </div>\
+        <div>
+          ${feature.properties.memo ?? ''}
+        </div>\
+        <div>\
+          <span ${feature.properties.flood ? '' : 'style="color:#ccc"'}>
+            洪水
+          </span>
+          <span ${feature.properties.landslide ? '' : 'style="color:#ccc"'}>
+            崖崩れ、土石流及び地滑り
+          </span>
+          <span ${feature.properties.storm ? '' : 'style="color:#ccc"'}>
+            高潮
+          </span>
+          <span ${feature.properties.earthquake ? '' : 'style="color:#ccc"'}>
+            地震
+          </span>
+          <span ${feature.properties.tsunami ? '' : 'style="color:#ccc"'}>
+            津波
+          </span>
+          <span ${feature.properties.fire ? '' : 'style="color:#ccc"'}>
+            大規模な火事
+          </span>
+          <span ${feature.properties.inland_flood ? '' : 'style="color:#ccc"'}>
+            内水氾濫
+          </span>
+          <span ${feature.properties.volcano ? '' : 'style="color:#ccc"'}>
+            火山
+          </span>
+        </div>
+        `,
+      )
+      .addTo(map);
+  });
 });
