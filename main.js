@@ -8,7 +8,7 @@ const map = new maplibregl.Map({
   zoom: 5,
   center: [138, 37],
   minZoom: 5,
-  maxZoom: 10,
+  maxZoom: 18,
   maxBounds: [122, 20, 154, 50],
   style: {
     version: 8,
@@ -101,7 +101,7 @@ const map = new maplibregl.Map({
           `${location.href.replace('index.html', '')}/emergency_evacuation_site/{z}/{x}/{y}.pbf`,
         ],
         minzoom: 5,
-        maxzoom: 10,
+        maxzoom: 8,
         attribution: 
           `<a helf="https://www.gsi.go.jp/bousaichiri/hinanbasho.html" target="_blank">国土地理院:指定緊急避難場所データ</a>`,
       },
