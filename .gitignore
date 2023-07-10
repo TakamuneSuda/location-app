@@ -22,3 +22,6 @@ dist-ssr
 *.njsproj
 *.sln
 *.sw?
+emergency_evacuation_site
+emergency_evacuation_site.qmd
+emergency_evacuation_site.geojson
